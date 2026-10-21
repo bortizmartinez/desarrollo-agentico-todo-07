@@ -21,6 +21,7 @@ func TasksIndex(c buffalo.Context) error {
 	}
 
 	c.Set("tasks", tasks)
+	c.Set("menuStatuses", models.MenuStatuses)
 	c.Set("task", &models.Task{})
 	c.Set("errors", validate.NewErrors())
 	return c.Render(http.StatusOK, r.HTML("tasks/index.plush.html"))
@@ -48,6 +49,7 @@ func TasksCreate(c buffalo.Context) error {
 		}
 
 		c.Set("tasks", tasks)
+		c.Set("menuStatuses", models.MenuStatuses)
 		c.Set("task", task)
 		c.Set("errors", verrs)
 		return c.Render(http.StatusUnprocessableEntity, r.HTML("tasks/index.plush.html"))
@@ -67,11 +69,12 @@ func TasksEdit(c buffalo.Context) error {
 	}
 
 	c.Set("task", task)
+	c.Set("statuses", models.TaskStatuses)
 	c.Set("errors", validate.NewErrors())
 	return c.Render(http.StatusOK, r.HTML("tasks/edit.plush.html"))
 }
 
-// TasksUpdate actualiza solo el título, conservando los demás datos de la tarea.
+// TasksUpdate actualiza el título y el estado, conservando los demás datos de la tarea.
 func TasksUpdate(c buffalo.Context) error {
 	tx := c.Value("tx").(*pop.Connection)
 
@@ -81,12 +84,14 @@ func TasksUpdate(c buffalo.Context) error {
 	}
 
 	input := struct {
-		Title string `form:"title" json:"title"`
+		Title  string `form:"title" json:"title"`
+		Status string `form:"status" json:"status"`
 	}{}
 	if err := c.Bind(&input); err != nil {
 		return err
 	}
 	task.Title = strings.TrimSpace(input.Title)
+	task.Status = input.Status
 
 	verrs, err := tx.ValidateAndUpdate(task)
 	if err != nil {
@@ -94,6 +99,7 @@ func TasksUpdate(c buffalo.Context) error {
 	}
 	if verrs.HasAny() {
 		c.Set("task", task)
+		c.Set("statuses", models.TaskStatuses)
 		c.Set("errors", verrs)
 		return c.Render(http.StatusUnprocessableEntity, r.HTML("tasks/edit.plush.html"))
 	}
@@ -102,7 +108,7 @@ func TasksUpdate(c buffalo.Context) error {
 	return c.Redirect(http.StatusSeeOther, "/")
 }
 
-// TasksToggle alterna una tarea entre completada y pendiente.
+// TasksToggle completa una tarea, o la reabre si ya estaba finalizada.
 func TasksToggle(c buffalo.Context) error {
 	tx := c.Value("tx").(*pop.Connection)
 
@@ -111,9 +117,37 @@ func TasksToggle(c buffalo.Context) error {
 		return c.Error(http.StatusNotFound, err)
 	}
 
-	task.Completed = !task.Completed
+	task.Toggle()
 	if err := tx.Update(task); err != nil {
 		return err
+	}
+
+	return c.Redirect(http.StatusSeeOther, "/")
+}
+
+// TasksUpdateStatus cambia el estado de una tarea desde la lista.
+func TasksUpdateStatus(c buffalo.Context) error {
+	tx := c.Value("tx").(*pop.Connection)
+
+	task := &models.Task{}
+	if err := tx.Find(task, c.Param("task_id")); err != nil {
+		return c.Error(http.StatusNotFound, err)
+	}
+
+	input := struct {
+		Status string `form:"status" json:"status"`
+	}{}
+	if err := c.Bind(&input); err != nil {
+		return err
+	}
+	task.Status = input.Status
+
+	verrs, err := tx.ValidateAndUpdate(task)
+	if err != nil {
+		return err
+	}
+	if verrs.HasAny() {
+		return c.Error(http.StatusUnprocessableEntity, verrs)
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/")

@@ -7,20 +7,20 @@ name = "tres tareas"
     [[scenario.table.row]]
       id = "<%= uuid() %>"
       title = "Comprar material de oficina"
-      completed = false
+      status = "pendiente"
       created_at = "<%= now() %>"
       updated_at = "<%= now() %>"
 
     [[scenario.table.row]]
       id = "<%= uuid() %>"
       title = "Llamar al gestor"
-      completed = false
+      status = "pendiente"
       created_at = "<%= now() %>"
       updated_at = "<%= now() %>"
 
     [[scenario.table.row]]
       id = "<%= uuid() %>"
       title = "Publicar la oferta de empleo"
-      completed = true
+      status = "finalizada"
       created_at = "<%= now() %>"
       updated_at = "<%= now() %>"

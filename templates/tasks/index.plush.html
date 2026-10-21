@@ -12,28 +12,43 @@
   <% } else { %>
     <ul class="task-list">
       <%= for (t) in tasks { %>
-        <li class="task<%= if (t.Completed) { %> task-completed<% } %>">
+        <li class="task<%= if (t.IsDone()) { %> task-completed<% } %>">
           <form action="/tasks/<%= t.ID %>/toggle" method="POST" class="task-toggle" data-task-toggle>
             <input type="hidden" name="authenticity_token" value="<%= authenticity_token %>">
             <input type="hidden" name="_method" value="PUT">
             <button
               type="submit"
               class="task-toggle-button"
-              aria-pressed="<%= if (t.Completed) { %>true<% } else { %>false<% } %>"
-              aria-label="<%= if (t.Completed) { %>Reabrir<% } else { %>Completar<% } %> tarea: <%= t.Title %>"
-              title="<%= if (t.Completed) { %>Reabrir<% } else { %>Completar<% } %> tarea"
+              aria-pressed="<%= if (t.IsDone()) { %>true<% } else { %>false<% } %>"
+              aria-label="<%= if (t.IsDone()) { %>Reabrir<% } else { %>Completar<% } %> tarea: <%= t.Title %>"
+              title="<%= if (t.IsDone()) { %>Reabrir<% } else { %>Completar<% } %> tarea"
             >
               <span class="completion-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12 4 4 8-8" /></svg>
               </span>
-              <span class="toggle-label sr-only"><%= if (t.Completed) { %>Reabrir<% } else { %>Completar<% } %></span>
+              <span class="toggle-label sr-only"><%= if (t.IsDone()) { %>Reabrir<% } else { %>Completar<% } %></span>
             </button>
           </form>
           <span class="task-title"><%= t.Title %></span>
-          <%= if (t.Completed) { %>
-            <span class="task-status">Completada</span>
-          <% } %>
+          <span class="task-status"><%= t.StatusLabel() %></span>
           <div class="task-actions">
+            <details class="status-menu">
+              <summary class="icon-action" aria-label="Cambiar estado de la tarea: <%= t.Title %>" title="Cambiar estado">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+              </summary>
+              <ul class="status-menu-list">
+                <%= for (s) in menuStatuses { %>
+                  <li>
+                    <form action="/tasks/<%= t.ID %>/status" method="POST">
+                      <input type="hidden" name="authenticity_token" value="<%= authenticity_token %>">
+                      <input type="hidden" name="_method" value="PUT">
+                      <input type="hidden" name="status" value="<%= s.Value %>">
+                      <button type="submit" class="status-menu-option"><%= s.Label %></button>
+                    </form>
+                  </li>
+                <% } %>
+              </ul>
+            </details>
             <a href="/tasks/<%= t.ID %>/edit" class="icon-action" aria-label="Editar tarea: <%= t.Title %>" title="Editar tarea">
               <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                 <path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15l-1 6Z" />

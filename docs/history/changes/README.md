@@ -18,3 +18,10 @@ Un documento de cierre cuenta qué pasó en su caso, y no se reescribe cuando ot
 Entre tres y cinco condiciones por documento, y las entradas en orden por número de issue. Si un documento ya tiene entrada, se actualizan sus condiciones en lugar de añadir otra.
 
 ## Índice
+
+- [feature-1-estado-de-tarea.md](feature-1-estado-de-tarea.md): cada tarea tiene un estado de seis, que sustituye a `completed`, con selector al editar, etiqueta, completar y reabrir y desplegable en la lista
+  - Cuando se trabaje con `models/task.go`, `actions/tasks.go` (`TasksUpdate`, `TasksToggle`, `TasksUpdateStatus`) o la ruta `PUT /tasks/{task_id}/status`
+  - Cuando se modifique la lista de tareas (`templates/tasks/index.plush.html`, `public/assets/app.js`, `public/assets/app.css`) o el selector de `templates/tasks/edit.plush.html`
+  - Cuando se añada, renombre o filtre un estado de tarea, o se use la columna `status` o la antigua `completed`
+  - Cuando se cree una migración de `tasks` o se revierta una (la vuelta atrás pierde estados) o se toquen `fixtures/tasks.toml` y `e2e/fixtures.ts`
+  - Cuando se investigue un estado que no se guarda, una etiqueta que no coincide con la base o un 422 al cambiar de estado
