@@ -10,10 +10,27 @@ Lo que ve y puede hacer el usuario con sus tareas. Todo pasa en dos pantallas: l
 - Cada tarea muestra:
   - un botón redondo para completarla o reabrirla;
   - su título;
-  - la etiqueta «Completada», si lo está;
-  - un enlace para editarla y un botón para eliminarla.
-- Los botones solo tienen icono, y su nombre accesible incluye el título: «Completar tarea: Comprar pan», «Reabrir tarea: …», «Editar tarea: …», «Eliminar tarea: …».
+  - la etiqueta de su estado, siempre visible;
+  - un botón para cambiar su estado, un enlace para editarla y un botón para eliminarla.
+- Los botones solo tienen icono, y su nombre accesible incluye el título: «Completar tarea: Comprar pan», «Reabrir tarea: …», «Cambiar estado de la tarea: …», «Editar tarea: …», «Eliminar tarea: …».
 - Sin tareas, la lista muestra «No hay tareas todavía. Añade la primera con el formulario.», y el número dice «0 tareas en tu lista».
+
+## Estados
+
+Cada tarea tiene un solo estado, uno de estos seis, que `models.TaskStatuses` define en este orden:
+
+| Estado | Valor guardado | Significado |
+| --- | --- | --- |
+| Pendiente | `pendiente` | Aún no se ha empezado |
+| En curso | `en_curso` | Se está trabajando en ella |
+| Bloqueada | `bloqueada` | No puede avanzar por algo externo |
+| Lista | `lista` | Terminada y lista para probar y validar |
+| Finalizada | `finalizada` | Se ha validado y el resultado ha sido satisfactorio |
+| Cancelada | `cancelada` | No se va a hacer |
+
+- Una tarea nueva se crea «Pendiente»: lo pone el modelo, y el formulario de creación no puede elegir otro estado.
+- `Task.Validate` rechaza cualquier otro valor, también una etiqueta en lugar del valor, con «El estado no es válido.».
+- Solo «Finalizada» lleva el estilo de tarea terminada: título tachado y círculo relleno.
 
 ## Reglas del título
 
@@ -35,15 +52,22 @@ Antes de guardar, la acción quita los espacios del principio y del final. Los c
 ## Editar
 
 - Se llega desde el enlace de editar de cada tarea. La pantalla tiene el enlace «← Volver a la lista», el título «Editar tarea» y el campo «Título» con el título actual. Debajo, la ayuda: «Hasta 200 caracteres. Los demás datos de la tarea no cambian.».
-- «Guardar cambios» cambia solo el título: si la tarea estaba completada, lo sigue estando. Después vuelve a la lista con el aviso «Tarea actualizada.».
-- Con un título inválido, la pantalla se vuelve a mostrar con `422` y el mensaje. «Cancelar» vuelve a la lista sin cambiar nada.
+- Debajo del título está el selector «Estado», con los seis estados y el actual elegido. Solo se puede elegir uno.
+- «Guardar cambios» cambia el título y el estado. Después vuelve a la lista con el aviso «Tarea actualizada.».
+- Con un título o un estado inválido, la pantalla se vuelve a mostrar con `422` y el mensaje junto al campo que falla, conservando lo enviado. «Cancelar» vuelve a la lista sin cambiar nada.
 - Si la tarea no existe, `404`.
 
 ## Completar y reabrir
 
-- El botón de cada tarea la alterna entre pendiente y completada. Una tarea completada lleva la etiqueta «Completada», y su botón pasa a reabrirla.
+- El botón redondo de cada tarea actúa con un solo clic, sin desplegar nada. En cualquier estado salvo «Finalizada» completa la tarea y la pone en «Finalizada»; en «Finalizada» la reabre y la pone en «Pendiente» (`Task.Toggle`).
 - Sin JavaScript, el formulario envía `PUT /tasks/{task_id}/toggle`, la acción cambia el estado y vuelve a la lista. No hay aviso.
-- Con JavaScript, `app.js` cambia la tarea en la página sin recargarla (la etiqueta, el estado del botón y su nombre accesible) y después llama a `fetch(form.action)`.
+- Con JavaScript, `app.js` cambia la tarea en la página sin recargarla (la etiqueta, que pasa a «Finalizada» o «Pendiente», el estado del botón y su nombre accesible) y envía el formulario de verdad: un `POST` con `_method=PUT` y el token.
+
+## Cambiar el estado desde la lista
+
+- Cada tarea tiene, aparte, el botón «Cambiar estado de la tarea: …», que despliega los cuatro estados que no pone el botón de completar o reabrir: «En curso», «Bloqueada», «Lista» y «Cancelada» (`models.MenuStatuses`). Se ofrecen siempre, también el que ya tiene la tarea.
+- Es un `<details>` nativo y funciona sin JavaScript. Cada opción es un formulario que envía `PUT /tasks/{task_id}/status` con el estado elegido; la acción lo guarda y vuelve a la lista.
+- La acción acepta cualquiera de los seis estados; con otro valor responde `422`. Si la tarea no existe, `404`.
 
 ## Eliminar
 
@@ -61,3 +85,4 @@ Los avisos salen arriba, en la primera pantalla que se muestra después de la ac
 | Editar | «Tarea actualizada.» |
 | Eliminar | «Tarea eliminada.» |
 | Completar o reabrir | Ninguno |
+| Cambiar el estado desde la lista | Ninguno |
